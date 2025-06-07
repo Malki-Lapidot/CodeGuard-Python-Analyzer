@@ -1,89 +1,344 @@
-# 📊 CodeGuard - Code Quality Analyzer
+# 🛡️ CodeGuard - Code Analysis System
 
-## 📌 Project Overview
+## 📋 Project Overview
 
-**CodeGuard** is a code analysis server that receives the latest version of a Python project (zipped), analyzes it, and returns feedback and graphs on code quality.
+**CodeGuard** is an advanced code analysis system that integrates with the `wit push` command to ensure high-quality code is maintained across all commits. The system performs automatic analysis of Python files, detects common code quality issues, and provides visual insights through graphs.
 
-The project is designed to integrate with a simplified Git-like system called **WIT**.  
-Once a `WIT PUSH` command is triggered, the zipped code is sent to this server for automatic analysis.
+### 🎯 Project Goal
+Develop a backend system that automatically analyzes Python files every time the user runs `wit push`, detects code quality issues, and returns visual graphs with insights.
 
 ---
 
-## ⚙️ Installation & Execution Instructions
+## 🧰 Technologies
 
-### 🔧 Requirements
+- **Language**: Python
+- **Server**: FastAPI  
+- **Code Analysis**: ast (Abstract Syntax Tree)
+- **Visualization**: matplotlib
+- **Version Control**: wit (custom system)
 
-- Python 3.10+
-- pip (Python package manager)
+---
 
-### 📥 Installation
+## 🏗️ Project Structure
 
-Clone the repository:
+```
+CodeGuard/
+├── README.md
+├── requirements.txt
+├── main.py                 # Main FastAPI server
+├── wit/
+│   ├── __init__.py
+│   ├── wit.py             # Version control system
+│   └── commands.py        # wit commands (init, add, commit, log, push)
+├── analyzer/
+│   ├── __init__.py
+│   ├── code_analyzer.py   # Code analysis using AST
+│   └── quality_checks.py  # Code quality checks
+├── visualization/
+│   ├── __init__.py
+│   └── graph_generator.py # Graph generation
+├── static/
+│   └── graphs/           # Generated graphs directory
+└── tests/
+    ├── __init__.py
+    └── test_analyzer.py   # Unit tests
+```
+
+---
+
+## 🚀 Installation and Setup
+
+### Prerequisites
+- Python 3.8+
+- pip
+
+### Installation Steps
+
+1. **Clone the project**
+   ```bash
+   git clone https://github.com/HadassaAvimorNew/CodeGuard.git
+   cd CodeGuard
+   ```
+
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Run the server**
+   ```bash
+   uvicorn main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+4. **Initialize wit system**
+   ```bash
+   python -m wit init
+   ```
+
+---
+
+## 🌐 API Endpoints
+
+### POST `/analyze`
+**Description**: Accepts files and returns visual graphs
+
+**Request Example**:
+```json
+{
+  "files": [
+    {
+      "name": "example.py",
+      "content": "def hello():\n    print('Hello World')"
+    }
+  ]
+}
+```
+
+**Response Example**:
+```json
+{
+  "graphs": {
+    "function_length_histogram": "/static/graphs/func_length_hist.png",
+    "issues_pie_chart": "/static/graphs/issues_pie.png",
+    "issues_per_file_bar": "/static/graphs/issues_bar.png"
+  },
+  "analysis_summary": {
+    "total_files": 1,
+    "total_functions": 1,
+    "total_issues": 2
+  }
+}
+```
+
+### POST `/alerts`
+**Description**: Accepts files and returns issue warnings
+
+**Request Example**:
+```json
+{
+  "files": [
+    {
+      "name": "example.py", 
+      "content": "def long_function():\n    # 25 lines of code..."
+    }
+  ]
+}
+```
+
+**Response Example**:
+```json
+{
+  "alerts": [
+    {
+      "file": "example.py",
+      "line": 1,
+      "type": "function_length",
+      "message": "Function 'long_function' is too long (25 lines, recommended < 20)",
+      "severity": "warning"
+    }
+  ]
+}
+```
+
+---
+
+## 🔍 Code Quality Checks
+
+The system performs the following checks using AST:
+
+| Check Type | Description | Warning Threshold |
+|------------|-------------|------------------|
+| **Function Length** | Detect functions that are too long | >20 lines |
+| **File Length** | Detect files that are too long | >200 lines |
+| **Unused Variables** | Detect variables that are assigned but never used | - |
+| **Missing Docstrings** | Detect functions without documentation strings | - |
+| **🌟 Bonus**: Non-English Variables | Detect variables written in non-English letters | - |
+
+---
+
+## 📊 Visual Graphs
+
+The system generates the following graphs using matplotlib:
+
+1. **Histogram** - Distribution of function lengths
+2. **Pie Chart** - Number of issues per issue type  
+3. **Bar Chart** - Number of issues per file
+4. **🌟 Bonus**: Line graph to track the number of issues over time
+
+All graphs are saved as PNG files and accessible through static paths.
+
+---
+
+## 🎮 Using the wit System
+
+### Available Commands
 
 ```bash
-git clone https://github.com/your-username/CodeGuard.git
-cd CodeGuard
+# Initialize new repository
+python -m wit init
 
-Install dependencies:
+# Add files to tracking
+python -m wit add 
 
-pip install -r requirements.txt
-🚀 Run the Server
-Start the FastAPI server:
+# Create commit
+python -m wit commit -m "commit message"
 
-uvicorn main:app --reload
-Once running, the server is accessible at:
+# Show commit history
+python -m wit log
 
-http://127.0.0.1:8000
-📁 Folder Structure
+# Push to server and analyze code
+python -m wit push
+```
 
-CodeGuard/
-│
-├── main.py               # FastAPI application
-├── Graph.py              # Responsible for graph generation
-├── CodeAnalysis.py       # Static analysis logic
-├── requirements.txt      # Project dependencies
-├── README.md             # Documentation file
-└── Graphs/               # Output folder for generated graphs
+### Example Workflow
 
-📡 API Endpoints
+```bash
+# Initialize project
+python -m wit init
 
-| Method | Endpoint   | Description                                                              |
-| ------ | ---------- | ------------------------------------------------------------------------ |
-| POST   | `/analyze` | Accepts a `.zip` file containing `.py` files and returns graph filepaths |
+# Add Python file
+echo "def hello(): print('world')" > example.py
+python -m wit add example.py
 
-📥 /analyze
-Method: POST
+# Create commit
+python -m wit commit -m "Add hello function"
 
-Request Body: multipart/form-data with a .zip file under field file
+# Push and analyze
+python -m wit push
+```
 
-Response: JSON list of file paths to graphs
+---
 
-✅ Example:
+## 🧪 Running Tests
 
-curl -X POST http://127.0.0.1:8000/analyze \
-  -F "file=@my_project.zip"
+```bash
+# Run all tests
+python -m pytest tests/
 
-📊 Output
-After analyzing your uploaded Python project, the server generates:
+# Run specific test
+python -m pytest tests/test_analyzer.py -v
 
-📊 Histogram per file — function lengths
+# Check code coverage
+python -m pytest --cov=analyzer tests/
+```
 
-🥧 Pie chart — error types distribution
+---
 
-📉 Bar chart — errors per file
+## 🔧 Configuration and Customization
 
-All graphs are saved in the Graphs/ directory in .png format.
+### Configuration File (config.py)
+```python
+# Code analysis settings
+MAX_FUNCTION_LENGTH = 20
+MAX_FILE_LENGTH = 200
+GENERATE_TIME_SERIES = True
 
-🧪 Checks Performed
-The system detects the following code issues:
+# Server settings
+HOST = "0.0.0.0" 
+PORT = 8000
+DEBUG = True
 
-| Check                      | Description                         |
-| -------------------------- | ----------------------------------- |
-| File too long              | File exceeds 200 lines              |
-| Function too long          | Function exceeds 20 lines           |
-| Function missing docstring | No documentation string in function |
-| Unused variable            | Variable defined but never used     |
+# File paths
+GRAPHS_DIR = "static/graphs"
+TEMP_DIR = "temp"
+```
 
-👤 Author
-Developed as part of an advanced Python course.
-Includes integration with a custom version control project named WIT (similar to Git).
+---
+
+## 📈 Usage Examples
+
+### Analyzing a Single File
+```python
+import requests
+
+files_data = {
+    "files": [
+        {
+            "name": "my_script.py",
+            "content": open("my_script.py").read()
+        }
+    ]
+}
+
+response = requests.post("http://localhost:8000/analyze", json=files_data)
+graphs = response.json()["graphs"]
+print(f"Graphs generated: {list(graphs.keys())}")
+```
+
+### Getting Alerts
+```python
+response = requests.post("http://localhost:8000/alerts", json=files_data)
+alerts = response.json()["alerts"]
+for alert in alerts:
+    print(f"⚠️ {alert['message']}")
+```
+
+---
+
+## 🤝 Contributing
+
+1. Fork the project
+2. Create a new branch for your feature (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is submitted as part of the Backend Development final project.
+
+---
+
+## 📞 Contact
+
+**Developer**: HadassaAvimorNew  
+**GitHub**: [HadassaAvimorNew](https://github.com/HadassaAvimorNew)
+
+---
+
+## 🏆 Advanced Features (Bonus)
+
+- ✅ Detection of non-English variable names  
+- ✅ Line graph for tracking issues over time
+- ✅ Advanced alert system
+- ✅ Complete and documented API
+- ✅ Comprehensive unit tests
+
+---
+
+## 🚀 Features Implemented
+
+### Core Features
+- ✅ FastAPI server with two endpoints
+- ✅ AST-based code analysis
+- ✅ Function length validation (>20 lines)
+- ✅ File length validation (>200 lines)
+- ✅ Unused variable detection
+- ✅ Missing docstring detection
+- ✅ Visual graph generation with matplotlib
+
+### Visualization
+- ✅ Function length histogram
+- ✅ Issues distribution pie chart
+- ✅ Issues per file bar chart
+- ✅ Time series analysis (bonus)
+
+### wit Version Control System
+- ✅ `wit init` - Initialize repository
+- ✅ `wit add` - Add files to tracking
+- ✅ `wit commit` - Create commits
+- ✅ `wit log` - Show commit history
+- ✅ `wit push` - Push and trigger analysis
+
+### Quality Assurance
+- ✅ Comprehensive error handling
+- ✅ Input validation
+- ✅ Unit tests coverage
+- ✅ Clean code structure
+- ✅ Detailed documentation
+
+---
+
+*Built with ❤️ for CodeGuard - Advanced Code Analysis System*
