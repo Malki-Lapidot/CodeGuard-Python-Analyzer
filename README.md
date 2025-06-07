@@ -23,13 +23,18 @@ Once a `WIT PUSH` command is triggered, the zipped code is sent to this server f
    ```bash
    git clone https://github.com/your-username/CodeGuard.git
    cd CodeGuard
-   
 Install dependencies:
 
+bash
+Copy
+Edit
 pip install -r requirements.txt
 🚀 Run the Server
 Start the FastAPI server with:
 
+bash
+Copy
+Edit
 uvicorn main:app --reload
 Once running, the server is accessible at:
 http://127.0.0.1:8000
@@ -46,11 +51,9 @@ CodeGuard/
 ├── requirements.txt        # Project dependencies
 ├── README.md               # Documentation file
 └── Graphs/                 # Output folder for generated graphs
-
 📡 API Endpoints
-| Method | Endpoint   | Description                                                                                  |
-| ------ | ---------- | -------------------------------------------------------------------------------------------- |
-| POST   | `/analyze` | Accepts a `.zip` file containing `.py` files and returns paths to generated analysis graphs. |
+Method	Endpoint	Description
+POST	/analyze	Accepts a .zip file containing .py files and returns paths to generated analysis graphs.
 
 📥 /analyze
 Method: POST
@@ -60,9 +63,11 @@ Request Body: multipart/form-data with a .zip file under field file
 Response: JSON list of file paths to graphs
 
 ✅ Example:
+bash
+Copy
+Edit
 curl -X POST http://127.0.0.1:8000/analyze \
   -F "file=@my_project.zip"
-  
 📊 Output
 After analyzing your uploaded Python project, the server generates:
 
@@ -77,12 +82,11 @@ Saved in the Graphs/ directory with .png format.
 🧪 Checks Performed
 The system detects:
 
-| Check                      | Description                         |
-| -------------------------- | ----------------------------------- |
-| File too long              | File exceeds 200 lines              |
-| Function too long          | Function exceeds 20 lines           |
-| Function missing docstring | No documentation string in function |
-| Unused variable            | Variable defined but never used     |
+Check	Description
+File too long	File exceeds 200 lines
+Function too long	Function exceeds 20 lines
+Function missing docstring	No documentation string in function
+Unused variable	Variable defined but never used
 
 👤 Author
 Developed as part of an advanced Python course
