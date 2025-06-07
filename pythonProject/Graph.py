@@ -4,6 +4,8 @@ import io
 from CodeAnalysis import CodeAnalysis
 import matplotlib.pyplot as plt
 import os
+from pymongo import MongoClient
+from db import collection, save_version
 
 
 class Graph:
@@ -19,8 +21,8 @@ class Graph:
             "unused_variable": 0
         }
         count_error_for_file = {}
+        count_error=0
 
-        # קריאה לתוכן הקובץ כ-bytes ועטיפה ב-BytesIO
         zip_bytes = io.BytesIO(self.file.file.read())
 
         with zipfile.ZipFile(zip_bytes) as z:
@@ -35,23 +37,29 @@ class Graph:
                     if CodeAnalysis.number_of_lines(code_str) > 200:
                         error_dict["long_file"] += 1
                         count_error_for_file[file_info.filename] += 1
+                        count_error += 1
 
                     func_len = CodeAnalysis.get_functions_lengths(code_str)
                     for key, value in func_len.items():
                         if value > 20:
                             error_dict["long_function"] += 1
                             count_error_for_file[file_info.filename] += 1
+                            count_error += 1
 
                     count_without_docstring = len(CodeAnalysis.get_functions_without_docstrings(code_str))
                     error_dict["function_without_docstrings"] += count_without_docstring
                     count_error_for_file[file_info.filename] += count_without_docstring
+                    count_error += count_without_docstring
 
                     count_unused_variable = len(CodeAnalysis.get_unused_variables(code_str))
                     error_dict["unused_variable"] += count_unused_variable
                     count_error_for_file[file_info.filename] += count_unused_variable
+                    count_error += count_unused_variable
 
+        save_version(count_error)
         self.create_pie_chart(error_dict)
         self.create_bar_chart(count_error_for_file)
+        self.create_line_chart(self.get_versions_for_chart())
         return self.graph_image
 
     def __get_histogram(self, code_str: str, filename: str):
@@ -70,7 +78,7 @@ class Graph:
         plt.tight_layout()
 
         output_path = os.path.join(
-            r"C:\Users\user1\Desktop\Advanced Python\CodeGuard\pythonProject\Graphs",
+            r"C:\Users\user1\Desktop\.Wit-Python-Mongo\Server\pythonProject\Graphs",
             f"{filename}_hist.png"
         )
         plt.savefig(output_path)
@@ -85,7 +93,7 @@ class Graph:
         plt.title("Error Types Distribution")
         plt.axis('equal')
         output_path = os.path.join(
-            r"C:\Users\user1\Desktop\Advanced Python\CodeGuard\pythonProject\Graphs",
+            r"C:\Users\user1\Desktop\.Wit-Python-Mongo\Server\pythonProject\Graphs",
             "pie chart.png"
         )
         plt.savefig(output_path)
@@ -103,9 +111,39 @@ class Graph:
         plt.xticks(rotation=45)
         plt.tight_layout()
         output_path = os.path.join(
-            r"C:\Users\user1\Desktop\Advanced Python\CodeGuard\pythonProject\Graphs",
+            r"C:\Users\user1\Desktop\.Wit-Python-Mongo\Server\pythonProject\Graphs",
             "bar chart.png"
         )
         plt.savefig(output_path)
         plt.close()
         self.graph_image.append(output_path)
+
+    def create_line_chart(self, data):
+        dates = [item["date"] for item in data]
+        issues = [item["issues"] for item in data]
+
+        plt.figure(figsize=(10, 5))
+        plt.plot(dates, issues, marker='o', color='blue')
+        plt.xlabel("Date")
+        plt.ylabel("Number of Issues")
+        plt.title("Issues per Version Over Time")
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.grid(True)
+        output_path = os.path.join(
+            r"C:\Users\user1\Desktop\.Wit-Python-Mongo\Server\pythonProject\Graphs",
+            "line chart.png"
+        )
+        plt.savefig(output_path)
+        plt.close()
+        self.graph_image.append(output_path)
+
+    def get_versions_for_chart(self):
+        data = collection.find().sort("date", 1)  # שליפה לפי סדר כרונולוגי
+        return [
+            {
+                "date": d["date"].strftime("%Y-%m-%d %H:%M"),
+                "issues": d["issue_count"]
+            }
+            for d in data
+        ]

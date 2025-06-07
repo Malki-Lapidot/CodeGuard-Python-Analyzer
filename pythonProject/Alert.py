@@ -24,7 +24,7 @@ class Alert:
     def __length_of_file(self):
         number_of_lines = CodeAnalysis.number_of_lines(self.code_str)
         if number_of_lines > 200:
-            return "The file is too large"
+            return "The file is too long"
         return None
 
     def __len_of_func(self):
